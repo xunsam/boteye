@@ -22,4 +22,5 @@ target_link_libraries(${PROJECT_NAME}
  ${XP_LIBRARY}
  ${XP_DRIVER_LIBRARY}
  ${Boost_LIBRARIES}
+ ${catkin_LIBRARIES}
 )

@@ -16,6 +16,13 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
+
+// ros stuff
+#include <ros/ros.h>
+#include <sensor_msgs/Imu.h>
+#include <sensor_msgs/Image.h>
+#include <image_transport/image_transport.h>
+
 #include <glog/logging.h>
 #include <XP/helper/shared_queue.h>
 #include <XP/helper/timer.h>
@@ -49,12 +56,19 @@
 #include <vector>
 #include <mutex>
 #include <memory>
+
+
 using std::cout;
 using std::endl;
 using std::vector;
 using XPDRIVER::XpSensorMultithread;
 using std::chrono::steady_clock;
 using XPDRIVER::SensorType;
+
+image_transport::Publisher img_pub_;
+ros::Publisher imu_pub_;
+
+
 DEFINE_bool(auto_gain, false, "turn on auto gain");
 DEFINE_string(wb_mode, "preset", "white balance mode: auto, disabled, preset");
 DEFINE_bool(calib_mode, false, "whether or not to show point distribution");
@@ -143,6 +157,8 @@ void image_data_callback(const cv::Mat& img_l, const cv::Mat& img_r, const float
     stereo_img.r = img_r;
     stereo_img.ts_100us = ts_100us;
     stereo_image_queue.push_back(stereo_img);
+    // publish ROS image here.
+
   }
 }
 
@@ -164,6 +180,18 @@ void IR_data_callback(const cv::Mat& img_l, const cv::Mat& img_r, const float ts
 void imu_data_callback(const XPDRIVER::ImuData& imu_data) {
   if (run_flag) {
     imu_data_queue.push_back(imu_data);
+    // publish ROS imu data here.
+    sensor_msgs::Imu ros_imu;
+    ros_imu.angular_velocity.x = imu_data.ang_v[0];
+    ros_imu.angular_velocity.y = imu_data.ang_v[1];
+    ros_imu.angular_velocity.z = imu_data.ang_v[2];
+    ros_imu.linear_acceleration.x = imu_data.accel[0];
+    ros_imu.linear_acceleration.y = imu_data.accel[1];
+    ros_imu.linear_acceleration.z = imu_data.accel[2];
+    // TODO: convert imu timestamp to ROS time.
+    ros_imu.header.stamp = ros::Time::now();
+    // imu_data.time_stamp; in 100us.
+    imu_pub_.publish(ros_imu);
   }
 }
 
@@ -1194,6 +1222,12 @@ void thread_write_imu_data() {
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
   google::ParseCommandLineFlags(&argc, &argv, true);
+
+  ros::init(argc, argv, "boteye");
+  ros::NodeHandle nh;
+  image_transport::ImageTransport it(nh);
+  img_pub_ = it.advertise("boteye_image", 10);
+  imu_pub_ = nh.advertise<sensor_msgs::Imu>("boteye_imu", 50);
 
 #ifdef __ARM_NEON__
   if (FLAGS_cpu_core >= 0 && FLAGS_cpu_core < 8) {
