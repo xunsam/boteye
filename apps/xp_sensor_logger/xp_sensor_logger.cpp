@@ -22,6 +22,7 @@
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/Image.h>
 #include <image_transport/image_transport.h>
+#include <cv_bridge/cv_bridge.h>
 
 #include <glog/logging.h>
 #include <XP/helper/shared_queue.h>
@@ -158,6 +159,14 @@ void image_data_callback(const cv::Mat& img_l, const cv::Mat& img_r, const float
     stereo_img.ts_100us = ts_100us;
     stereo_image_queue.push_back(stereo_img);
     // publish ROS image here.
+    std_msgs::Header header;
+    // TODO: use image time
+    header.stamp = ros::Time::now();
+    header.frame_id = "boteye_stereo";
+    sensor_msgs::ImagePtr ros_image =
+        cv_bridge::CvImage(header, "rgb8", img_l).toImageMsg();
+
+    img_pub_.publish(ros_image);
 
   }
 }
