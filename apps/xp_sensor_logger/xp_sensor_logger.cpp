@@ -66,7 +66,8 @@ using XPDRIVER::XpSensorMultithread;
 using std::chrono::steady_clock;
 using XPDRIVER::SensorType;
 
-image_transport::Publisher img_pub_;
+image_transport::Publisher img_pub_left_;
+image_transport::Publisher img_pub_right_;
 ros::Publisher imu_pub_;
 
 
@@ -163,11 +164,13 @@ void image_data_callback(const cv::Mat& img_l, const cv::Mat& img_r, const float
     // TODO: use image time
     header.stamp = ros::Time::now();
     header.frame_id = "boteye_stereo";
-    sensor_msgs::ImagePtr ros_image =
+    sensor_msgs::ImagePtr ros_image_l =
         cv_bridge::CvImage(header, "rgb8", img_l).toImageMsg();
+    sensor_msgs::ImagePtr ros_image_r =
+        cv_bridge::CvImage(header, "rgb8", img_r).toImageMsg();
 
-    img_pub_.publish(ros_image);
-
+    img_pub_left_.publish(ros_image_l);
+    img_pub_right_.publish(ros_image_r);
   }
 }
 
@@ -1235,7 +1238,8 @@ int main(int argc, char** argv) {
   ros::init(argc, argv, "boteye");
   ros::NodeHandle nh;
   image_transport::ImageTransport it(nh);
-  img_pub_ = it.advertise("boteye_image", 10);
+  img_pub_left_ = it.advertise("boteye_image_left", 10);
+  img_pub_right_ = it.advertise("boteye_image_right", 10);
   imu_pub_ = nh.advertise<sensor_msgs::Imu>("boteye_imu", 50);
 
 #ifdef __ARM_NEON__
