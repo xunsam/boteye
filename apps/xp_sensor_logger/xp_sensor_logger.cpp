@@ -165,9 +165,9 @@ void image_data_callback(const cv::Mat& img_l, const cv::Mat& img_r, const float
     header.stamp = ros::Time::now();
     header.frame_id = "boteye_stereo";
     sensor_msgs::ImagePtr ros_image_l =
-        cv_bridge::CvImage(header, "rgb8", img_l).toImageMsg();
+        cv_bridge::CvImage(header, "mono8", img_l).toImageMsg();
     sensor_msgs::ImagePtr ros_image_r =
-        cv_bridge::CvImage(header, "rgb8", img_r).toImageMsg();
+        cv_bridge::CvImage(header, "mono8", img_r).toImageMsg();
 
     img_pub_left_.publish(ros_image_l);
     img_pub_right_.publish(ros_image_r);
@@ -1242,6 +1242,7 @@ int main(int argc, char** argv) {
   img_pub_right_ = it.advertise("boteye_image_right", 10);
   imu_pub_ = nh.advertise<sensor_msgs::Imu>("boteye_imu", 50);
 
+  
 #ifdef __ARM_NEON__
   if (FLAGS_cpu_core >= 0 && FLAGS_cpu_core < 8) {
     cpu_set_t set;
