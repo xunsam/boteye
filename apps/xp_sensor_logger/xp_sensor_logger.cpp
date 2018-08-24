@@ -202,6 +202,7 @@ void imu_data_callback(const XPDRIVER::ImuData& imu_data) {
     ros_imu.linear_acceleration.z = imu_data.accel[2];
     // TODO: convert imu timestamp to ROS time.
     ros_imu.header.stamp = ros::Time::now();
+    ros_imu.header.frame_id = "imu0";
     // imu_data.time_stamp; in 100us.
     imu_pub_.publish(ros_imu);
   }
@@ -1238,9 +1239,9 @@ int main(int argc, char** argv) {
   ros::init(argc, argv, "boteye");
   ros::NodeHandle nh;
   image_transport::ImageTransport it(nh);
-  img_pub_left_ = it.advertise("boteye_image_left", 10);
-  img_pub_right_ = it.advertise("boteye_image_right", 10);
-  imu_pub_ = nh.advertise<sensor_msgs::Imu>("boteye_imu", 50);
+  img_pub_left_ = it.advertise("/cam0/image_raw", 10);
+  img_pub_right_ = it.advertise("/cam1/image_raw", 10);
+  imu_pub_ = nh.advertise<sensor_msgs::Imu>("imu0", 50);
 
   
 #ifdef __ARM_NEON__
